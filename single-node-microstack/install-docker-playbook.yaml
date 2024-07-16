@@ -1,0 +1,59 @@
+---
+- name: install docker
+  hosts: all
+  become: yes
+  become_method: sudo 
+  tasks:
+    - name: Install aptitude
+      ansible.builtin.apt:
+        name:
+          - aptitude
+        state: latest
+        update_cache: yes
+
+    - name: Install pre requisite
+      ansible.builtin.apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+        state: latest
+        update_cache: yes
+        
+    - name: Add GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add docker repository
+      ansible.builtin.apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Install docker packages
+      ansible.builtin.apt:
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+        state: latest
+        update_cache: yes
+
+    - name: Add user to docker group
+      ansible.builtin.user:
+        user: ubuntu
+        group: docker
+        append: yes
+    
+    - name: Reset SSH connection to login as part of Docker group
+      ansible.builtin.meta: reset_connection 
+
+    - name: Run hello-world image
+      ansible.builtin.command: docker run hello-world
+    
